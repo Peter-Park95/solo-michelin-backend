@@ -57,6 +57,9 @@ public class UserServiceImpl implements UserService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(request.getPassword())
+                .profileImage(request.getProfileImage())
+                .region(request.getRegion())
+                .introduction(request.getIntroduction())
                 .created(user.getCreated())
                 .deleted(user.isDeleted())
                 .build();

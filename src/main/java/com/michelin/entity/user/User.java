@@ -27,6 +27,14 @@ public class User {
     @Column(nullable = false, length = 100)
     private String password;
 
+    @Column(length = 512)
+    private String profileImage;
+
+    private String region;
+
+    @Column(length = 100)
+    private String introduction;
+
     private LocalDateTime created;
 
     private boolean deleted;

@@ -40,6 +40,7 @@ public class ReviewController {
     public void deleteReview(@PathVariable Long id){
         reviewService.deleteReview(id);
     }
+
     @GetMapping("/user/{userId}")
     public ResponseEntity<Map<String, Object>> getReviewsByUserId(
             @PathVariable Long userId,
@@ -52,6 +53,7 @@ public class ReviewController {
         Map<String, Object> response = new HashMap<>();
         response.put("reviews", reviewPage.getContent());
         response.put("hasMore", reviewPage.hasNext()); // 다음 페이지 존재 여부
+        response.put("totalCount", reviewPage.getTotalElements());
 
         return ResponseEntity.ok(response);
     }
