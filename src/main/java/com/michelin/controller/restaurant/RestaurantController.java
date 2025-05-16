@@ -4,6 +4,8 @@ import com.michelin.dto.restaurant.RestaurantRequest;
 import com.michelin.dto.restaurant.RestaurantResponse;
 import com.michelin.service.restaurant.RestaurantService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +26,8 @@ public class RestaurantController {
     }
 
     @GetMapping
-    public List<RestaurantResponse> getAllRestaurants() {
-        return restaurantService.getAllRestaurants();
+    public Page<RestaurantResponse> getAllRestaurants(Pageable pageable) {
+        return restaurantService.getAllRestaurants(pageable);
     }
 
     @GetMapping("/{id}")

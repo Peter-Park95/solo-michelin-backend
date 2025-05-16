@@ -5,6 +5,8 @@ import com.michelin.dto.user.UserResponse;
 import com.michelin.entity.user.User;
 import com.michelin.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,11 +35,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserResponse> getAllUsers(){
-        return userRepository.findAll().stream()
-                .filter(user-> !user.isDeleted())
-                .map(UserResponse::from)
-                .collect(Collectors.toList());
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+        return userRepository.findByDeletedFalse(pageable)
+                .map(UserResponse::from);
     }
     @Override
     public UserResponse getUserById(Long id){

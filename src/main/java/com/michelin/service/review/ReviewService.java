@@ -2,6 +2,7 @@ package com.michelin.service.review;
 
 import com.michelin.dto.review.ReviewRequest;
 import com.michelin.dto.review.ReviewResponse;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -12,5 +13,5 @@ public interface ReviewService {
     ReviewResponse updateReview(Long id, ReviewRequest request);
     void deleteReview(Long id);
 
-    List<ReviewResponse> getReviewsByUserId(Long userId);
+    Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating) ;
 }

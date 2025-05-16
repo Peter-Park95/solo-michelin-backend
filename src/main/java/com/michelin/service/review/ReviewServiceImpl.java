@@ -8,6 +8,10 @@ import com.michelin.entity.user.User;
 import com.michelin.repository.restaurant.RestaurantRepository;
 import com.michelin.repository.review.ReviewRepository;
 import com.michelin.repository.user.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,10 +82,27 @@ public class ReviewServiceImpl implements ReviewService{
         reviewRepository.save(review);
     }
 
-    @Override
-    public List<ReviewResponse> getReviewsByUserId(Long userId) {
-        return reviewRepository.findByUserIdAndDeleted(userId, 0).stream()
-                .map(ReviewResponse::from)
-                .collect(Collectors.toList());
+    public Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating) {
+        // 기본 정렬: 최신순 (created), 아니면 rating
+        String sortField = "created";
+        if ("rating".equals(orderBy)) {
+            sortField = "rating";
+        }
+
+        Sort sort = Sort.by(Sort.Direction.DESC, sortField);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Review> reviewPage;
+
+        // 평점 필터가 있는 경우
+        if (minRating != null) {
+            reviewPage = reviewRepository.findByUserIdWithMinRating(userId, minRating, pageable);
+        } else {
+            reviewPage = reviewRepository.findByUserIdWithSort(userId, pageable);
+        }
+
+        return reviewPage.map(ReviewResponse::from);
     }
+
+
 }

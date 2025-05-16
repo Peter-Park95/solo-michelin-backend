@@ -4,6 +4,8 @@ import com.michelin.dto.restaurant.RestaurantRequest;
 import com.michelin.dto.restaurant.RestaurantResponse;
 import com.michelin.entity.restaurant.Restaurant;
 import com.michelin.repository.restaurant.RestaurantRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,11 +40,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public List<RestaurantResponse> getAllRestaurants() {
-        return restaurantRepository.findAll().stream()
-                .filter(r -> r.getDeleted() == 0)
-                .map(RestaurantResponse::from)
-                .collect(Collectors.toList());
+    public Page<RestaurantResponse> getAllRestaurants(Pageable pageable) {
+        return restaurantRepository.findByDeletedFalse(pageable)
+                .map(RestaurantResponse::from);
     }
 
     @Override
