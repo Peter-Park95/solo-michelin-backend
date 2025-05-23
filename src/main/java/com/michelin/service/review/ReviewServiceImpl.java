@@ -8,35 +8,40 @@ import com.michelin.entity.user.User;
 import com.michelin.repository.restaurant.RestaurantRepository;
 import com.michelin.repository.review.ReviewRepository;
 import com.michelin.repository.user.UserRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import com.michelin.service.aws.S3Uploader;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ReviewServiceImpl implements ReviewService{
+public class ReviewServiceImpl implements ReviewService {
+
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
+    private final S3Uploader s3Uploader;
 
-    public ReviewServiceImpl(ReviewRepository reviewRepository, UserRepository userRepository, RestaurantRepository restaurantRepository) {
+    public ReviewServiceImpl(ReviewRepository reviewRepository, UserRepository userRepository, RestaurantRepository restaurantRepository, S3Uploader s3Uploader) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.restaurantRepository = restaurantRepository;
+        this.s3Uploader = s3Uploader;
     }
+
     @Override
     @Transactional
-    public ReviewResponse createReview(ReviewRequest request){
+    public ReviewResponse createReview(ReviewRequest request, MultipartFile image) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(()-> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new RuntimeException("음식점을 찾을 수 없습니다."));
+
         Review review = new Review();
         review.setUser(user);
         review.setRestaurant(restaurant);
@@ -44,6 +49,15 @@ public class ReviewServiceImpl implements ReviewService{
         review.setComment(request.getComment());
         review.setCreated(LocalDateTime.now());
         review.setDeleted(0);
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                String uploadedUrl = s3Uploader.upload(image); // ✅ S3에 업로드하고 URL 저장
+                review.setImageUrl(uploadedUrl);
+            } catch (IOException e) {
+                throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
+            }
+        }
         return ReviewResponse.from(reviewRepository.save(review));
     }
 
@@ -57,8 +71,8 @@ public class ReviewServiceImpl implements ReviewService{
 
     @Override
     public ReviewResponse getReviewById(Long id) {
-        Review review =  reviewRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("리뷰를 찾을 수 없습니다."));
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
         return ReviewResponse.from(review);
     }
 
@@ -66,7 +80,7 @@ public class ReviewServiceImpl implements ReviewService{
     @Transactional
     public ReviewResponse updateReview(Long id, ReviewRequest request) {
         Review review = reviewRepository.findById(id)
-                .orElseThrow(()->new RuntimeException("리뷰를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
         review.setRating(request.getRating());
         review.setComment(request.getComment());
         review.setModified(LocalDateTime.now());
@@ -77,24 +91,21 @@ public class ReviewServiceImpl implements ReviewService{
     @Transactional
     public void deleteReview(Long id) {
         Review review = reviewRepository.findById(id)
-                .orElseThrow(()->new RuntimeException("리뷰를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
         review.setDeleted(1);
         reviewRepository.save(review);
     }
 
+    @Override
     public Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating) {
-        // 기본 정렬: 최신순 (created), 아니면 rating
         String sortField = "created";
         if ("rating".equals(orderBy)) {
             sortField = "rating";
         }
 
-        Sort sort = Sort.by(Sort.Direction.DESC, sortField);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortField));
         Page<Review> reviewPage;
 
-        // 평점 필터가 있는 경우
         if (minRating != null) {
             reviewPage = reviewRepository.findByUserIdWithMinRating(userId, minRating, pageable);
         } else {
@@ -103,6 +114,4 @@ public class ReviewServiceImpl implements ReviewService{
 
         return reviewPage.map(ReviewResponse::from);
     }
-
-
 }

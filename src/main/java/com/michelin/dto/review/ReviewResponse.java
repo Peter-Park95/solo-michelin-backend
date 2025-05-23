@@ -17,6 +17,7 @@ public class ReviewResponse {
     private float restaurantAvgRating;
     private float rating;
     private String comment;
+    private String reviewImageUrl;
     private LocalDateTime created;
     private LocalDateTime modified;
 
@@ -30,6 +31,7 @@ public class ReviewResponse {
                 .restaurantAvgRating(review.getRestaurant().getAvgRating())
                 .rating(review.getRating())
                 .comment(review.getComment())
+                .reviewImageUrl(review.getImageUrl())
                 .created(review.getCreated())
                 .modified(review.getModified())
                 .build();

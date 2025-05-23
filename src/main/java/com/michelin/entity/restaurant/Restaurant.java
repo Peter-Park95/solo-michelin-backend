@@ -15,35 +15,34 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Restaurant {
-	//Restaurant 테이블
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;//	음식점 고유 ID
+    private Long id;
 
 	@Column(nullable = false, length = 20)
-    private String name;		//음식점 이름
+    private String name;
 
 	@Column(nullable = false, length = 100)
-    private String address;		//음식점 주소
+    private String address;
 
 	@Column(nullable = false, length = 8)
-    private String category;	//음식 종류
+    private String category;
 
 	@Column(columnDefinition = "TEXT")
-    private String map_url;		//지도 링크
+    private String map_url;
 
 	@Column(columnDefinition = "FLOAT DEFAULT 0.0")
-	private float avg_rating;  // 평균 별점
+	private float avg_rating;
 
-	@Column(columnDefinition = "TEXT")  // 이미지 URL이 길 수도 있어서 TEXT로
+	@Column(columnDefinition = "TEXT")
 	private String imageUrl;
 
 	@Column(columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
 	private LocalDateTime created;
 
 	@Column(columnDefinition = "TINYINT(1) DEFAULT 0")
-	private int deleted;  // 삭제 여부 (0: 정상, 1: 삭제됨)
+	private int deleted;
 
 
 	public void setMapUrl(String mapUrl) {

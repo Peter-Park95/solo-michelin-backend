@@ -6,8 +6,10 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@NoArgsConstructor
 @Getter
 @Setter
 public class ReviewRequest {
@@ -25,5 +27,5 @@ public class ReviewRequest {
 
     @NotBlank(message = "한줄평은 필수입니다.")
     private String comment;
-
+    private String imageUrl;
 }

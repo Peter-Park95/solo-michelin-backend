@@ -19,21 +19,24 @@ import java.time.LocalDateTime;
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;  // 리뷰 고유 ID
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "restaurant_id", nullable = false)
-    private Restaurant restaurant;  // FK: 음식점
+    private Restaurant restaurant;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;  // FK: 작성자
-
+    private User user;
     @Column(nullable = false)
-    private float rating;  // 별점
+    private float rating;
 
     @Column(columnDefinition = "TEXT")
-    private String comment;  // 한줄평
+    private String comment;
+
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
 
     @Column(columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime created;
@@ -42,6 +45,6 @@ public class Review {
     private LocalDateTime modified;
 
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0")
-    private int deleted;  // 삭제 여부 (0: 정상, 1: 삭제됨)
+    private int deleted;
 
 }
