@@ -1,15 +1,13 @@
 package com.michelin.entity.user;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

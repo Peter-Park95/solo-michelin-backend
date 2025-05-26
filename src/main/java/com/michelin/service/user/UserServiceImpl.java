@@ -1,12 +1,15 @@
 package com.michelin.service.user;
 
+import com.michelin.dto.user.LoginRequest;
 import com.michelin.dto.user.UserRequest;
 import com.michelin.dto.user.UserResponse;
 import com.michelin.entity.user.User;
 import com.michelin.repository.user.UserRepository;
+import com.michelin.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,9 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    private final JwtUtil jwtUtil;
 
     @Override
     @Transactional
@@ -80,5 +86,15 @@ public class UserServiceImpl implements UserService {
                 .deleted(true)
                 .build();
         userRepository.save(user);
+    }
+    //로그인
+    @Override
+    public String login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다"));
+        if (!request.getPassword().equals(user.getPassword())) {
+            throw new RuntimeException("비밀번호가 틀렸습니다");
+        }
+        return jwtUtil.createToken(user.getEmail());
     }
 }
