@@ -17,9 +17,13 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String createToken(String username) {
+    // ✅ 수정된 버전: userId도 함께 담는다
+    public String createToken(String email, Long userId) {
+        Claims claims = Jwts.claims().setSubject(email); // subject는 email로
+        claims.put("userId", userId); // ✅ 핵심 추가 claim
+
         return Jwts.builder()
-                .setSubject(username)
+                .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

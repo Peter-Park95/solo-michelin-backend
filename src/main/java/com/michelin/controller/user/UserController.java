@@ -3,6 +3,7 @@ package com.michelin.controller.user;
 
 import com.michelin.dto.user.UserRequest;
 import com.michelin.dto.user.UserResponse;
+import com.michelin.dto.user.UserUpdateRequest;
 import com.michelin.service.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -34,7 +35,7 @@ public class UserController {
         return userService.getUserById(id);
     }
     @PutMapping("/{id}")
-    public UserResponse updateUser(@PathVariable Long id, @RequestBody @Valid UserRequest request){
+    public UserResponse updateUser(@PathVariable Long id, @RequestBody @Valid UserUpdateRequest request){
         return userService.updateUser(id, request);
     }
     @DeleteMapping("/{id}")

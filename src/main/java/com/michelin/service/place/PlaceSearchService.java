@@ -1,4 +1,4 @@
-package com.michelin.service;
+package com.michelin.service.place;
 
 
 import org.springframework.beans.factory.annotation.Value;
