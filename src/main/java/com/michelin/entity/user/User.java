@@ -20,7 +20,7 @@ public class User {
     private String username;
 
     @Column(nullable = false, length = 50, unique = true)
-    private String email; //(중복 방지)
+    private String email;
 
     @Column(nullable = false, length = 100)
     private String password;
