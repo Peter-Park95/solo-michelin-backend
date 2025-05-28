@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -80,12 +81,16 @@ public class KakaoAuthServiceImpl implements KakaoAuthService {
 
         String email = userNode.path("kakao_account").path("email").asText();
         String nickname = userNode.path("properties").path("nickname").asText();
-
+        String profileImageUrl = userNode
+                .path("kakao_account")
+                .path("profile")
+                .path("profile_image_url")
+                .asText();
+        System.out.println("🔍 카카오 사용자 정보 JSON: " + profileImageUrl);
         // 3. DB 저장 or 조회
         Optional<User> userOpt = userRepository.findAll().stream()
-                .filter(u -> u.getEmail().equals(email))
+                .filter(u -> u.getEmail().equals(email) && !u.isDeleted())  // (soft delete)
                 .findFirst();
-
         User user;
         if (userOpt.isPresent()) {
             user = userOpt.get();
@@ -95,6 +100,8 @@ public class KakaoAuthServiceImpl implements KakaoAuthService {
             user.setUsername(nickname);
             user.setEmail(email);
             user.setPassword(dummyPassword);
+            user.setProfileImageUrl(profileImageUrl);
+            user.setCreated(LocalDateTime.now());
             userRepository.save(user);
         }
 

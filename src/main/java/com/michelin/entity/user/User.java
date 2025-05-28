@@ -25,7 +25,7 @@ public class User {
     @Column(nullable = false, length = 100)
     private String password;
 
-    @Column(length = 512)
+    @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImage;
 
     private String region;
@@ -39,5 +39,8 @@ public class User {
 
     protected void onCreate() {
         this.created = LocalDateTime.now();
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) { this.profileImage = profileImageUrl;
     }
 }
