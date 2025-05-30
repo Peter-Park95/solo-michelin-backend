@@ -1,10 +1,7 @@
 package com.michelin.entity.restaurant;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Restaurant {
 	
 	@Id
@@ -26,14 +24,17 @@ public class Restaurant {
 	@Column(nullable = false, length = 100)
     private String address;
 
-	@Column(nullable = false, length = 8)
-    private String category;
+	@Column(length = 100) // 기존보다 더 길게!
+	private String category;
+
+	@Column(name = "kakao_place_id", unique = true)
+	private String kakaoPlaceId;
 
 	@Column(columnDefinition = "TEXT")
-    private String map_url;
+    private String mapUrl;
 
 	@Column(columnDefinition = "FLOAT DEFAULT 0.0")
-	private float avg_rating;
+	private float avgRating;
 
 	@Column(columnDefinition = "TEXT")
 	private String imageUrl;
@@ -45,17 +46,4 @@ public class Restaurant {
 	private int deleted;
 
 
-	public void setMapUrl(String mapUrl) {
-		this.map_url = mapUrl;
-	}
-	public String getMapUrl() {
-		return this.map_url;
-	}
-
-	public void setAvgRating(float avgRating) {
-		this.avg_rating = avgRating;
-	}
-	public float getAvgRating() {
-		return this.avg_rating;
-	}
 }

@@ -13,7 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import com.michelin.service.aws.S3Uploader;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +27,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final S3Uploader s3Uploader;
     private final JwtUtil jwtUtil;
 
     @Override
@@ -56,25 +59,37 @@ public class UserServiceImpl implements UserService {
         return UserResponse.from(user);
 
     }
-    @Override
     @Transactional
-    public UserResponse updateUser(Long id, UserUpdateRequest request){
+    public UserResponse updateUser(Long id, UserUpdateRequest request, MultipartFile image) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        user = User.builder()
-                .id(user.getId())
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(user.getPassword())
-                .profileImage(request.getProfileImage())
-                .region(request.getRegion())
-                .introduction(request.getIntroduction())
-                .created(user.getCreated())
-                .deleted(user.isDeleted())
-                .build();
-        User updated = userRepository.save(user);
-        return UserResponse.from(updated);
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getRegion() != null) {
+            user.setRegion(request.getRegion());
+        }
+
+        if (request.getIntroduction() != null) {
+            user.setIntroduction(request.getIntroduction());
+        }
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                String imageUrl = s3Uploader.upload(image);
+                user.setProfileImage(imageUrl);
+            } catch (IOException e) {
+                throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
+            }
+        }
+
+        return UserResponse.from(userRepository.save(user));
     }
     @Override
     @Transactional

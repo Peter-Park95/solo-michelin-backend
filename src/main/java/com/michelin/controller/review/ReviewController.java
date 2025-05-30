@@ -1,11 +1,19 @@
 package com.michelin.controller.review;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.michelin.dto.review.ReviewRequest;
 import com.michelin.dto.review.ReviewResponse;
+import com.michelin.dto.review.ReviewWithKakaoRequest;
 import com.michelin.service.review.ReviewService;
+import com.michelin.util.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,9 +25,11 @@ import java.util.Map;
 @RequestMapping("/api/reviews")
 public class ReviewController {
     private final ReviewService reviewService;
+    private final JwtUtil jwtUtil;
 
-    public ReviewController(ReviewService reviewService){
+    public ReviewController(ReviewService reviewService, JwtUtil jwtUtil){
         this.reviewService = reviewService;
+        this.jwtUtil = jwtUtil;
     }
 
     // ✅ 이미지 파일도 함께 받도록 Multipart 방식으로 변경
@@ -68,7 +78,30 @@ public class ReviewController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping(value = "/kakao", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ReviewResponse> createReviewWithKakao(
+            @RequestPart("review") ReviewWithKakaoRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            HttpServletRequest httpRequest // ✅ 인증 정보 직접 추출용
+    ) {
+        String token = extractJwtFromRequest(httpRequest);
+        if (token == null || !jwtUtil.validateToken(token)) {
+            throw new RuntimeException("인증 실패: JWT 토큰이 유효하지 않거나 누락되었습니다.");
+        }
+
+        Long userId = jwtUtil.getUserIdFromToken(token); // ✅ userId 직접 추출
+        ReviewResponse response = reviewService.createReviewWithKakaoPlace(request, image, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    // ✅ 토큰 추출 유틸 메서드
+    private String extractJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
 }
 
-// ReviewService 인터페이스에도 메서드 시그니처 추가 필요:
-// ReviewResponse createReview(ReviewRequest request, MultipartFile image);

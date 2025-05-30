@@ -2,6 +2,7 @@ package com.michelin.service.review;
 
 import com.michelin.dto.review.ReviewRequest;
 import com.michelin.dto.review.ReviewResponse;
+import com.michelin.dto.review.ReviewWithKakaoRequest;
 import com.michelin.entity.restaurant.Restaurant;
 import com.michelin.entity.review.Review;
 import com.michelin.entity.user.User;
@@ -114,4 +115,48 @@ public class ReviewServiceImpl implements ReviewService {
 
         return reviewPage.map(ReviewResponse::from);
     }
+    @Transactional
+    public ReviewResponse createReviewWithKakaoPlace(ReviewWithKakaoRequest request, MultipartFile image, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다."));
+
+        Restaurant restaurant = restaurantRepository.findByKakaoPlaceId(request.getKakaoPlaceId())
+                .orElseGet(() -> restaurantRepository.save(
+                        Restaurant.builder()
+                                .name(request.getRestaurantName())
+                                .address(request.getAddress())
+                                .mapUrl(request.getMapUrl())
+                                .category(request.getCategory())
+                                .kakaoPlaceId(request.getKakaoPlaceId())
+                                .avgRating(0.0f)
+                                .created(LocalDateTime.now())
+                                .deleted(0)
+                                .build()
+                ));
+
+        String imageUrl = null;
+        if (image != null && !image.isEmpty()) {
+            try {
+                imageUrl = s3Uploader.upload(image);
+            } catch (Exception e) {
+                throw new RuntimeException("이미지 업로드 실패: " + e.getMessage());
+            }
+        }
+
+        Review review = Review.builder()
+                .user(user)
+                .restaurant(restaurant)
+                .rating(request.getRating())
+                .comment(request.getComment())
+                .imageUrl(imageUrl)
+                .created(LocalDateTime.now())
+                .modified(LocalDateTime.now())
+                .deleted(0)
+                .build();
+
+        return ReviewResponse.from(reviewRepository.save(review));
+    }
+
+
 }
+
