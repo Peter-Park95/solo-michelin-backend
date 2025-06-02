@@ -26,6 +26,13 @@ public class Review {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(name = "food_rating")
+    private float foodRating;
+    @Column(name = "mood_rating")
+    private float moodRating;
+    @Column(name = "service_rating")
+    private float serviceRating;
     @Column(nullable = false)
     private float rating;
 

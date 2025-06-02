@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ReviewRequest {
+public class ReviewAddRequest {
 
     @NotNull(message = "유저 ID는 필수입니다.")
     private Long userId;
@@ -23,7 +23,15 @@ public class ReviewRequest {
 
     @Min(value = 0)
     @Max(value = 5)
-    private float rating;
+    private int foodRating;
+
+    @Min(value = 0)
+    @Max(value = 5)
+    private int moodRating;
+
+    @Min(value = 0)
+    @Max(value = 5)
+    private int serviceRating;
 
     @NotBlank(message = "한줄평은 필수입니다.")
     private String comment;

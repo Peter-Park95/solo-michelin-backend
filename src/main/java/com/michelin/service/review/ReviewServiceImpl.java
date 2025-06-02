@@ -1,7 +1,8 @@
 package com.michelin.service.review;
 
-import com.michelin.dto.review.ReviewRequest;
+import com.michelin.dto.review.ReviewAddRequest;
 import com.michelin.dto.review.ReviewResponse;
+import com.michelin.dto.review.ReviewUpdateRequest;
 import com.michelin.dto.review.ReviewWithKakaoRequest;
 import com.michelin.entity.restaurant.Restaurant;
 import com.michelin.entity.review.Review;
@@ -37,16 +38,23 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public ReviewResponse createReview(ReviewRequest request, MultipartFile image) {
+    public ReviewResponse createReview(ReviewAddRequest request, MultipartFile image) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new RuntimeException("음식점을 찾을 수 없습니다."));
-
+        int food = request.getFoodRating();
+        int mood = request.getMoodRating();
+        int service = request.getServiceRating();
+        float avg = (food + mood + service) / 3.0f;
+        float rounded = Math.round(avg * 10) / 10.0f;
         Review review = new Review();
         review.setUser(user);
         review.setRestaurant(restaurant);
-        review.setRating(request.getRating());
+        review.setFoodRating(food);
+        review.setMoodRating(mood);
+        review.setServiceRating(service);
+        review.setRating(rounded);
         review.setComment(request.getComment());
         review.setCreated(LocalDateTime.now());
         review.setDeleted(0);
@@ -79,12 +87,27 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public ReviewResponse updateReview(Long id, ReviewRequest request) {
+    public ReviewResponse updateReview(Long id, ReviewUpdateRequest request, MultipartFile imageFile) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
-        review.setRating(request.getRating());
-        review.setComment(request.getComment());
+
+        // 별점과 코멘트 업데이트
+        review.setFoodRating(request.getFoodRating());
+        review.setMoodRating(request.getMoodRating());
+        review.setServiceRating(request.getServiceRating());
+        review.setRating(request.getRating()); // 평균값
+        review.setComment(request.getComment()); // null 허용
         review.setModified(LocalDateTime.now());
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                String imageUrl = s3Uploader.upload(imageFile); // 새 이미지 업로드
+                review.setImageUrl(imageUrl); // 새 이미지로 교체
+            } catch (IOException e) {
+                throw new RuntimeException("이미지 업로드 중 오류 발생", e);
+            }
+        }
+
         return ReviewResponse.from(reviewRepository.save(review));
     }
 
@@ -142,11 +165,19 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new RuntimeException("이미지 업로드 실패: " + e.getMessage());
             }
         }
+        int food = request.getFoodRating();
+        int mood = request.getMoodRating();
+        int service = request.getServiceRating();
+        float avg = (food + mood + service) / 3.0f;
+        float rounded = Math.round(avg * 10) / 10.0f;
 
         Review review = Review.builder()
                 .user(user)
                 .restaurant(restaurant)
-                .rating(request.getRating())
+                .foodRating(food)
+                .moodRating(mood)
+                .serviceRating(service)
+                .rating(rounded)
                 .comment(request.getComment())
                 .imageUrl(imageUrl)
                 .created(LocalDateTime.now())

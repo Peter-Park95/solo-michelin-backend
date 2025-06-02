@@ -14,6 +14,9 @@ public class ReviewResponse {
     private Long restaurantId;
     private String restaurantName;
     private String restaurantImageUrl;
+    private float foodRating;
+    private float moodRating;
+    private float serviceRating;
     private float restaurantAvgRating;
     private float rating;
     private String comment;
@@ -29,6 +32,9 @@ public class ReviewResponse {
                 .restaurantName(review.getRestaurant().getName())
                 .restaurantImageUrl(review.getRestaurant().getImageUrl())
                 .restaurantAvgRating(review.getRestaurant().getAvgRating())
+                .foodRating(review.getFoodRating())
+                .moodRating(review.getMoodRating())
+                .serviceRating(review.getServiceRating())
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .reviewImageUrl(review.getImageUrl())

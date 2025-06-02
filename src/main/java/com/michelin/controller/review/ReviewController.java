@@ -1,9 +1,8 @@
 package com.michelin.controller.review;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.michelin.dto.review.ReviewRequest;
+import com.michelin.dto.review.ReviewAddRequest;
 import com.michelin.dto.review.ReviewResponse;
+import com.michelin.dto.review.ReviewUpdateRequest;
 import com.michelin.dto.review.ReviewWithKakaoRequest;
 import com.michelin.service.review.ReviewService;
 import com.michelin.util.JwtUtil;
@@ -12,8 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,7 +33,7 @@ public class ReviewController {
     // ✅ image는 @RequestPart(required = false)로 nullable 처리됨
     @PostMapping(consumes = "multipart/form-data")
     public ReviewResponse createReview(
-            @RequestPart("request") @Valid ReviewRequest request,
+            @RequestPart("request") @Valid ReviewAddRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image
     ){
         return reviewService.createReview(request, image);
@@ -47,14 +44,18 @@ public class ReviewController {
         return reviewService.getAllReviews();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}") // 사용중 : 리뷰수정페이지
     public ReviewResponse getReviewById(@PathVariable Long id){
         return reviewService.getReviewById(id);
     }
 
-    @PutMapping("/{id}")
-    public ReviewResponse updateReview(@PathVariable Long id, @RequestBody @Valid ReviewRequest request){
-        return reviewService.updateReview(id, request);
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ReviewResponse updateReview(
+            @PathVariable Long id,
+            @RequestPart("review") @Valid ReviewUpdateRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile imageFile
+    ) {
+        return reviewService.updateReview(id, request, imageFile);
     }
 
     @DeleteMapping("/{id}")
@@ -79,7 +80,7 @@ public class ReviewController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = "/kakao", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/kakao", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // 사용중
     public ResponseEntity<ReviewResponse> createReviewWithKakao(
             @RequestPart("review") ReviewWithKakaoRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image,

@@ -1,6 +1,8 @@
 package com.michelin.dto.review;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,8 +29,17 @@ public class ReviewWithKakaoRequest {
     @JsonProperty("category")
     private String category;
 
-    @JsonProperty("rating")
-    private float rating;
+    @Min(value = 0)
+    @Max(value = 5)
+    private int foodRating;
+
+    @Min(value = 0)
+    @Max(value = 5)
+    private int moodRating;
+
+    @Min(value = 0)
+    @Max(value = 5)
+    private int serviceRating;
 
     @JsonProperty("comment")
     private String comment;
