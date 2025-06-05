@@ -4,10 +4,13 @@ import com.michelin.dto.restaurant.RestaurantRequest;
 import com.michelin.dto.restaurant.RestaurantResponse;
 import com.michelin.entity.restaurant.Restaurant;
 import com.michelin.repository.restaurant.RestaurantRepository;
+import com.michelin.repository.review.ReviewRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,9 +20,11 @@ import java.util.stream.Collectors;
 public class RestaurantServiceImpl implements RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
-
-    public RestaurantServiceImpl(RestaurantRepository restaurantRepository) {
+    private final ReviewRepository reviewRepository;
+    public RestaurantServiceImpl(RestaurantRepository restaurantRepository, ReviewRepository reviewRepository) {
         this.restaurantRepository = restaurantRepository;
+        this.reviewRepository = reviewRepository;
+
     }
 
     @Override
@@ -85,4 +90,20 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .collect(Collectors.toList());
     }
 
+    public int updateAllAvgRating() {
+        List<Restaurant> restaurants = restaurantRepository.findAll();
+        int updatedCount = 0;
+        for (Restaurant restaurant : restaurants) {
+            Float avg = reviewRepository.findAverageRatingByRestaurantId(restaurant.getId());
+
+            if (avg != null) {
+                BigDecimal roundedAvg = new BigDecimal(avg)
+                    .setScale(2, RoundingMode.HALF_UP);
+                restaurant.setAvgRating(roundedAvg.floatValue());
+                restaurantRepository.save(restaurant);
+                updatedCount++;
+            }
+        }
+        return updatedCount;
+    }
 }

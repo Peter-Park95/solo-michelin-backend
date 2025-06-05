@@ -16,5 +16,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r FROM Review r WHERE r.user.id = :userId AND r.deleted = 0 AND r.rating >= :rating")
     Page<Review> findByUserIdWithMinRating(@Param("userId") Long userId, @Param("rating") Double rating, Pageable pageable);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.restaurant.id = :restaurantId AND r.deleted = 0")
+    Float findAverageRatingByRestaurantId(@Param("restaurantId") Long restaurantId);
 }
 

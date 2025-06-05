@@ -17,4 +17,5 @@ public interface RestaurantService {
 
 
     List<RestaurantResponse> searchByName(String query);
+    int updateAllAvgRating();
 }
