@@ -138,6 +138,15 @@ public class ReviewServiceImpl implements ReviewService {
 
         return reviewPage.map(ReviewResponse::from);
     }
+    
+    @Override
+    public Page<ReviewResponse> getReviewsWithImageByUserId(Long userId, int page, int size) {
+    	//이미지 포함 리뷰 조회
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created"));
+        Page<Review> reviewPage = reviewRepository.findWithImageByUserId(userId, pageable);
+        return reviewPage.map(ReviewResponse::from);
+    }
+    
     @Transactional
     public ReviewResponse createReviewWithKakaoPlace(ReviewWithKakaoRequest request, MultipartFile image, Long userId) {
         User user = userRepository.findById(userId)
