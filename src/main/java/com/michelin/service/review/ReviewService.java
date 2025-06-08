@@ -22,5 +22,7 @@ public interface ReviewService {
 
     Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating);
 
+    Page<ReviewResponse> getReviewsWithImageByUserId(Long userId, int page, int size);
+
     public ReviewResponse createReviewWithKakaoPlace(ReviewWithKakaoRequest request, MultipartFile image, Long userId);
 }
