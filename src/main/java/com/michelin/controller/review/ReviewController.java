@@ -1,9 +1,6 @@
 package com.michelin.controller.review;
 
-import com.michelin.dto.review.ReviewAddRequest;
-import com.michelin.dto.review.ReviewResponse;
-import com.michelin.dto.review.ReviewUpdateRequest;
-import com.michelin.dto.review.ReviewWithKakaoRequest;
+import com.michelin.dto.review.*;
 import com.michelin.service.review.ReviewService;
 import com.michelin.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -80,7 +77,7 @@ public class ReviewController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = "/kakao", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // 사용중
+    @PostMapping(value = "/kakao/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // 사용중
     public ResponseEntity<ReviewResponse> createReviewWithKakao(
             @RequestPart("review") ReviewWithKakaoRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image,
@@ -103,6 +100,12 @@ public class ReviewController {
             return bearerToken.substring(7);
         }
         return null;
+    }
+    @GetMapping("/highlights")
+    public ResponseEntity<List<ReviewSummaryResponse>> getHighlights(
+            @RequestParam(defaultValue = "9") int limit
+    ) {
+        return ResponseEntity.ok(reviewService.getHighlightedReviews(limit));
     }
 }
 

@@ -1,9 +1,6 @@
 package com.michelin.service.review;
 
-import com.michelin.dto.review.ReviewAddRequest;
-import com.michelin.dto.review.ReviewResponse;
-import com.michelin.dto.review.ReviewUpdateRequest;
-import com.michelin.dto.review.ReviewWithKakaoRequest;
+import com.michelin.dto.review.*;
 import com.michelin.entity.restaurant.Restaurant;
 import com.michelin.entity.review.Review;
 import com.michelin.entity.user.User;
@@ -188,6 +185,12 @@ public class ReviewServiceImpl implements ReviewService {
         return ReviewResponse.from(reviewRepository.save(review));
     }
 
+    public List<ReviewSummaryResponse> getHighlightedReviews(int limit) {
+        List<Review> reviews = reviewRepository.findRandomHighlightedReviews(limit);
+        return reviews.stream()
+                .map(ReviewSummaryResponse::from)
+                .collect(Collectors.toList());
+    }
 
 }
 

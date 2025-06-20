@@ -19,5 +19,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.restaurant.id = :restaurantId AND r.deleted = 0")
     Float findAverageRatingByRestaurantId(@Param("restaurantId") Long restaurantId);
+
+    @Query(value = "SELECT * FROM review WHERE rating >= 3.5 AND deleted = 0 ORDER BY RAND() LIMIT :limit", nativeQuery = true)
+    List<Review> findRandomHighlightedReviews(@Param("limit") int limit);
+
 }
 
