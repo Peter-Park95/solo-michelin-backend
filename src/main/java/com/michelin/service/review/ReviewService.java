@@ -20,9 +20,11 @@ public interface ReviewService {
 
     void deleteReview(Long id);
 
-    Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating);
+    Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating, Boolean withImage);
 
     Page<ReviewResponse> getReviewsWithImageByUserId(Long userId, int page, int size);
 
     public ReviewResponse createReviewWithKakaoPlace(ReviewWithKakaoRequest request, MultipartFile image, Long userId);
+    
+    void deleteReviewImage(Long reviewId);
 }

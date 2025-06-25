@@ -43,11 +43,11 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new RuntimeException("음식점을 찾을 수 없습니다."));
-        int food = request.getFoodRating();
-        int mood = request.getMoodRating();
-        int service = request.getServiceRating();
-        float avg = (food + mood + service) / 3.0f;
-        float rounded = Math.round(avg * 10) / 10.0f;
+        float food = request.getFoodRating();
+        float mood = request.getMoodRating();
+        float service = request.getServiceRating();
+        float rounded = calculateAverageRating(food, mood, service);
+        
         Review review = new Review();
         review.setUser(user);
         review.setRestaurant(restaurant);
@@ -95,7 +95,8 @@ public class ReviewServiceImpl implements ReviewService {
         review.setFoodRating(request.getFoodRating());
         review.setMoodRating(request.getMoodRating());
         review.setServiceRating(request.getServiceRating());
-        review.setRating(request.getRating()); // 평균값
+        float avg = calculateAverageRating(request.getFoodRating(), request.getMoodRating(), request.getServiceRating());
+        review.setRating(avg);// 평균값
         review.setComment(request.getComment()); // null 허용
         review.setModified(LocalDateTime.now());
 
@@ -121,21 +122,23 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating) {
-        String sortField = "created";
-        if ("rating".equals(orderBy)) {
-            sortField = "rating";
+    public Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating, Boolean withImage) {
+    	String sortField = "created";
+        if ("rating".equals(orderBy)) {        
+        	sortField = "rating";
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortField));
+
         Page<Review> reviewPage;
 
-        if (minRating != null) {
+        if (Boolean.TRUE.equals(withImage)) {	// 이미지 필터 우선
+            reviewPage = reviewRepository.findWithImageByUserId(userId, pageable);
+        } else if (minRating != null) {	// minRating 조건
             reviewPage = reviewRepository.findByUserIdWithMinRating(userId, minRating, pageable);
-        } else {
+        } else {	// 기본
             reviewPage = reviewRepository.findByUserIdWithSort(userId, pageable);
         }
-
         return reviewPage.map(ReviewResponse::from);
     }
     
@@ -174,11 +177,11 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new RuntimeException("이미지 업로드 실패: " + e.getMessage());
             }
         }
-        int food = request.getFoodRating();
-        int mood = request.getMoodRating();
-        int service = request.getServiceRating();
-        float avg = (food + mood + service) / 3.0f;
-        float rounded = Math.round(avg * 10) / 10.0f;
+        float food = request.getFoodRating();
+        float mood = request.getMoodRating();
+        float service = request.getServiceRating();
+        
+        float rounded = calculateAverageRating(food, mood, service);
 
         Review review = Review.builder()
                 .user(user)
@@ -197,6 +200,19 @@ public class ReviewServiceImpl implements ReviewService {
         return ReviewResponse.from(reviewRepository.save(review));
     }
 
+    @Override
+    public void deleteReviewImage(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
 
+        review.setImageUrl(null);  // DB의 image_url 컬럼 null 처리
+        review.setModified(LocalDateTime.now());
+        reviewRepository.save(review);
+    }
+    
+    private float calculateAverageRating(float food, float mood, float service) {
+        float avg = (food + mood + service) / 3.0f;
+        return Math.round(avg * 10) / 10.0f;
+    }
 }
 
