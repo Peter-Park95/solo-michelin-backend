@@ -1,9 +1,6 @@
 package com.michelin.service.review;
 
-import com.michelin.dto.review.ReviewAddRequest;
-import com.michelin.dto.review.ReviewResponse;
-import com.michelin.dto.review.ReviewUpdateRequest;
-import com.michelin.dto.review.ReviewWithKakaoRequest;
+import com.michelin.dto.review.*;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,4 +24,6 @@ public interface ReviewService {
     public ReviewResponse createReviewWithKakaoPlace(ReviewWithKakaoRequest request, MultipartFile image, Long userId);
     
     void deleteReviewImage(Long reviewId);
+
+    public List<ReviewSummaryResponse> getHighlightedReviews(int limit);
 }
