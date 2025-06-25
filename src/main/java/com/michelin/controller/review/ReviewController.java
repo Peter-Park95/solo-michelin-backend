@@ -6,6 +6,7 @@ import com.michelin.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -66,9 +67,10 @@ public class ReviewController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "created") String orderBy,
-            @RequestParam(required = false) Double minRating
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) Boolean withImage
     ) {
-        Page<ReviewResponse> reviewPage = reviewService.getReviewsByUserId(userId, page, size, orderBy, minRating);
+        Page<ReviewResponse> reviewPage = reviewService.getReviewsByUserId(userId, page, size, orderBy, minRating, withImage);
         Map<String, Object> response = new HashMap<>();
         response.put("reviews", reviewPage.getContent());
         response.put("hasMore", reviewPage.hasNext());
@@ -101,6 +103,17 @@ public class ReviewController {
         }
         return null;
     }
+    
+    @PatchMapping("/{id}/image")
+    public ResponseEntity<?> deleteReviewImage(@PathVariable Long id) {
+        try {
+            reviewService.deleteReviewImage(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("이미지 삭제 실패");
+        }
+    }
+    
     @GetMapping("/highlights")
     public ResponseEntity<List<ReviewSummaryResponse>> getHighlights(
             @RequestParam(defaultValue = "9") int limit
