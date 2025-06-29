@@ -4,7 +4,9 @@ import com.michelin.dto.user.LoginRequest;
 import com.michelin.dto.user.UserRequest;
 import com.michelin.dto.user.UserResponse;
 import com.michelin.dto.user.UserUpdateRequest;
+import com.michelin.entity.user.PasswordResetToken;
 import com.michelin.entity.user.User;
+import com.michelin.repository.user.PasswordResetTokenRepository;
 import com.michelin.repository.user.UserRepository;
 import com.michelin.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +20,16 @@ import com.michelin.service.aws.S3Uploader;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
+    
     private final PasswordEncoder passwordEncoder;
     private final S3Uploader s3Uploader;
     private final JwtUtil jwtUtil;
@@ -106,14 +110,64 @@ public class UserServiceImpl implements UserService {
                 .build();
         userRepository.save(user);
     }
+    
     //로그인
     @Override
     public String login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다"));
+        
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("비밀번호가 틀렸습니다");
         }
+        
         return jwtUtil.createToken(user.getEmail(), user.getId());
+    }
+    
+    //이메일 찾기
+    @Override
+    public String findEmailByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("해당 닉네임으로 가입된 계정을 찾을 수 없습니다."));
+        
+        return user.getEmail();
+    }
+    
+    //비밀번호 찾기: 이메일 발송
+    @Override
+    public void processForgotPassword(String email) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("해당 이메일의 사용자가 없습니다."));
+
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = new PasswordResetToken(
+            token,
+            user,
+            LocalDateTime.now().plusMinutes(15)
+        );
+
+        passwordResetTokenRepository.save(resetToken);
+
+        // 이메일 전송 (이메일 보내는 로직은 별도 EmailService에서 구현)
+        emailService.sendPasswordResetEmail(user.getEmail(), token);
+    }
+    
+  //비밀번호 찾기: 비밀번호 변경
+    @Override
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+            .orElseThrow(() -> new RuntimeException("유효하지 않은 토큰입니다."));
+
+        if (resetToken.isExpired()) {
+            throw new RuntimeException("토큰이 만료되었습니다.");
+        }
+
+        User user = resetToken.getUser();
+        
+        user.setPassword(passwordEncoder.encode(newPassword));  // 암호화
+        
+        userRepository.save(user);
+        passwordResetTokenRepository.delete(resetToken); // 보안: 사용 후 삭제
     }
 }
