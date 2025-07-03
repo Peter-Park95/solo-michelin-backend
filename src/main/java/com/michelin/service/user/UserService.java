@@ -25,7 +25,7 @@ public interface UserService {
 
     //이메일 찾기
 	String findEmailByUsername(String username);
-	
+    String findEmailByUsernameAndPhone(String username, String phone_number);
     //비밀번호 찾기
 	void processForgotPassword(String email);
 	

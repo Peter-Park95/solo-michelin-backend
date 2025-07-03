@@ -17,12 +17,13 @@ public class ForgotPasswordController {
 	
     private final UserService userService;
     
-    //이메일 찾기
+
+    //이메일 찾기 (이름 + 폰번호)
     @PostMapping("/find-email")
-    public ResponseEntity<?> findEmail(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> findEmail1(@RequestBody Map<String, String> request) {
         String username = request.get("username");
-        String email = userService.findEmailByUsername(username);
-        
+        String phone_number = request.get("phone");
+        String email = userService.findEmailByUsernameAndPhone(username, phone_number);
         return ResponseEntity.ok(Map.of("email", email));
     }
 

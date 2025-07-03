@@ -133,6 +133,14 @@ public class UserServiceImpl implements UserService {
         
         return user.getEmail();
     }
+
+    @Override
+    public String findEmailByUsernameAndPhone(String username, String phone_number) {
+        User user = userRepository.findByUsernameAndPhoneNumber(username, phone_number)
+                .orElseThrow(() -> new RuntimeException("입력하신 정보와 일치하는 계정을 찾을 수 없습니다."));
+
+        return user.getEmail();
+    }
     
     //비밀번호 찾기: 이메일 발송
     @Override
