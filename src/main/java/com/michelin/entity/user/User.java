@@ -28,6 +28,9 @@ public class User {
     @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImage;
 
+    @Column(name = "phone_number", length = 20, nullable = true)
+    private String phoneNumber;
+
     private String region;
 
     @Column(length = 100)
