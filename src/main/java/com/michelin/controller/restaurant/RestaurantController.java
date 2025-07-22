@@ -45,13 +45,9 @@ public class RestaurantController {
         restaurantService.deleteRestaurant(id);
     }
 
-
-
-
     @GetMapping(params = "query")
     public List<RestaurantResponse> searchRestaurants(@RequestParam String query) {
         return restaurantService.searchByName(query);
     }
-
 
 }
