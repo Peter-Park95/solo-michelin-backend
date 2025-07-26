@@ -20,9 +20,11 @@ public class PlaceSearchController {
     @GetMapping
     public ResponseEntity<String> searchPlaces(
             @RequestParam String query,
-            @RequestParam(defaultValue = "1") int page // page 파라미터 추가
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam double x,
+            @RequestParam double y
     ) {
-        String result = placeSearchService.searchPlaces(query, page); // page 전달
+        String result = placeSearchService.searchPlaces(query, page, x, y); // page 전달
         if (result == null) {
             return ResponseEntity.status(500).body("카카오 API 호출 실패");
         }

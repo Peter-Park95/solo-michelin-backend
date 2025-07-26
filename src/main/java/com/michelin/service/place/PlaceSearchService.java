@@ -14,7 +14,7 @@ public class PlaceSearchService {
     @Value("${kakao.rest.api.key}")
     private String kakaoApiKey;
 
-    public String searchPlaces(String query, int page) {
+    public String searchPlaces(String query, int page, double x, double y) {
         try {
             RestTemplate restTemplate = new RestTemplate();
             String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
@@ -22,7 +22,10 @@ public class PlaceSearchService {
             // 페이지 파라미터 추가
             String url = "https://dapi.kakao.com/v2/local/search/keyword.json?query=" + encodedQuery
                     + "&category_group_code=FD6"
-                    + "&page=" + page;
+                    + "&page=" + page
+                    + "&x=" + x
+                    + "&y=" + y
+                    + "&sort=distance";
 
             URI uri = new URI(url);
             HttpHeaders headers = new HttpHeaders();

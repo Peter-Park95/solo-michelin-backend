@@ -12,6 +12,7 @@ public class ReviewSummaryResponse {
     private float rating;
     private String comment;
     private String imageUrl;
+    private String userName;
 
     public static ReviewSummaryResponse from(Review review) {
         ReviewSummaryResponse dto = new ReviewSummaryResponse();
@@ -20,6 +21,7 @@ public class ReviewSummaryResponse {
         dto.setRating(review.getRating());
         dto.setComment(review.getComment());
         dto.setImageUrl(review.getImageUrl()); // 리뷰에 이미지 필드가 있어야 함
+        dto.setUserName(review.getUser().getUsername());
         return dto;
     }
 }
