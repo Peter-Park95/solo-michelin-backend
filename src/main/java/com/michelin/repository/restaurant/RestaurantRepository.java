@@ -9,8 +9,12 @@ import java.util.Optional;
 
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
+	
     // 기본 CRUD 제공 (findAll, findById, save, deleteById 등)
     List<Restaurant> findByNameContainingIgnoreCaseAndDeleted(String name, int deleted);
+    
     Page<Restaurant> findByDeletedFalse(Pageable pageable);
+    
     Optional<Restaurant> findByKakaoPlaceId(String kakaoPlaceId);
+    
 }

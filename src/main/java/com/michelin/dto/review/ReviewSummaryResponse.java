@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ReviewSummaryResponse {
+	private Long id;
     private String restaurantName;
     private String restaurantAddress;
     private float rating;
@@ -16,6 +17,7 @@ public class ReviewSummaryResponse {
 
     public static ReviewSummaryResponse from(Review review) {
         ReviewSummaryResponse dto = new ReviewSummaryResponse();
+        dto.setId(review.getId());
         dto.setRestaurantName(review.getRestaurant().getName());
         dto.setRestaurantAddress(review.getRestaurant().getAddress());
         dto.setRating(review.getRating());

@@ -7,6 +7,7 @@ import com.michelin.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,17 @@ public class WishlistController {
 
         wishlistService.toggleWishlist(userId, kakaoPlaceId);
         return ResponseEntity.ok("위시리스트 토글 완료");
+    }
+    
+    @GetMapping("/check")
+    public ResponseEntity<?> checkWishlist(
+        @RequestHeader("Authorization") String authHeader,
+        @RequestParam String kakaoPlaceId
+    ) {
+        String token = authHeader.replace("Bearer ", "");
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        boolean isWishlisted = wishlistService.isWishlisted(userId, kakaoPlaceId);
+        return ResponseEntity.ok().body(Map.of("isWishlisted", isWishlisted));
     }
     
     @GetMapping
