@@ -69,4 +69,10 @@ public class WishlistServiceImpl implements WishlistService {
             })
             .collect(Collectors.toList());
     }
+    
+    @Override
+    public boolean isWishlisted(Long userId, String kakaoPlaceId) {
+        return wishlistRepository.existsById(new WishlistId(userId, kakaoPlaceId));
+    }
+    
 }

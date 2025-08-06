@@ -10,4 +10,6 @@ public interface WishlistService {
     
     List<WishlistResponse> getWishlistByUserId(Long userId);
     
+    boolean isWishlisted(Long userId, String kakaoPlaceId);
+    
 }
