@@ -7,6 +7,7 @@ import com.michelin.entity.user.User;
 import com.michelin.repository.restaurant.RestaurantRepository;
 import com.michelin.repository.review.ReviewRepository;
 import com.michelin.repository.user.UserRepository;
+import com.michelin.repository.wishlist.WishlistRepository;
 import com.michelin.service.aws.S3Uploader;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -25,13 +26,19 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final S3Uploader s3Uploader;
+    private final WishlistRepository wishlistRepository;
 
-    public ReviewServiceImpl(ReviewRepository reviewRepository, UserRepository userRepository, RestaurantRepository restaurantRepository, S3Uploader s3Uploader) {
-        this.reviewRepository = reviewRepository;
-        this.userRepository = userRepository;
-        this.restaurantRepository = restaurantRepository;
-        this.s3Uploader = s3Uploader;
-    }
+    public ReviewServiceImpl(ReviewRepository reviewRepository,
+				            UserRepository userRepository,
+				            RestaurantRepository restaurantRepository,
+				            S3Uploader s3Uploader,
+				            WishlistRepository wishlistRepository) {
+		this.reviewRepository = reviewRepository;
+		this.userRepository = userRepository;
+		this.restaurantRepository = restaurantRepository;
+		this.s3Uploader = s3Uploader;
+		this.wishlistRepository = wishlistRepository;
+	}
 
     @Override
     @Transactional
@@ -216,6 +223,26 @@ public class ReviewServiceImpl implements ReviewService {
     private float calculateAverageRating(float food, float mood, float service) {
         float avg = (food + mood + service) / 3.0f;
         return Math.round(avg * 10) / 10.0f;
+    }
+
+    //검색 시 마크 인포윈도우에 전체 리뷰 및 위시 갯수 조회
+    @Override
+    public ReviewStatsDto getReviewStats(String kakaoPlaceId) {
+        long reviewCount = reviewRepository.countByRestaurant_KakaoPlaceIdAndDeleted(kakaoPlaceId, 0);
+        long wishlistCount = wishlistRepository.countByKakaoPlaceId(kakaoPlaceId);
+        return new ReviewStatsDto(reviewCount, wishlistCount);
+    }
+    
+	//전체 리뷰 조회
+    public List<ReviewDto> getReviewsByPlace(String kakaoPlaceId) {
+        List<Review> reviewEntities = reviewRepository.findAllByRestaurant_KakaoPlaceIdAndDeleted(kakaoPlaceId, 0);
+        return reviewEntities.stream()
+                .map(r -> new ReviewDto(
+                        r.getUser().getUsername(), // <- User에서 이름 가져오기
+                        r.getComment(),
+                        (int) r.getRating() // rating 타입 맞춰서 int로 변환
+                ))
+                .collect(Collectors.toList());
     }
 }
 

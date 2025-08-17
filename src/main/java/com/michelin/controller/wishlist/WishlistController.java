@@ -52,4 +52,10 @@ public class WishlistController {
         List<WishlistResponse> wishlist = wishlistService.getWishlistByUserId(userId);
         return ResponseEntity.ok(wishlist);
     }
+    
+    @GetMapping("/{kakaoPlaceId}/count")
+    public ResponseEntity<?> getWishlistCount(@PathVariable String kakaoPlaceId) {
+        long count = wishlistService.countByKakaoPlaceId(kakaoPlaceId);
+        return ResponseEntity.ok(Map.of("wishlistCount", count));
+    }
 }

@@ -26,5 +26,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query(value = "SELECT * FROM review WHERE rating >= 3.5 AND deleted = 0 ORDER BY RAND() LIMIT :limit", nativeQuery = true)
     List<Review> findRandomHighlightedReviews(@Param("limit") int limit);
 
+    //검색 시 마크 인포윈도우에 전체 리뷰 수 조회
+    long countByRestaurant_KakaoPlaceIdAndDeleted(String kakaoPlaceId, int deleted);
+    
+    List<Review> findAllByRestaurant_KakaoPlaceIdAndDeleted(String kakaoPlaceId, int deleted);
 }
 
