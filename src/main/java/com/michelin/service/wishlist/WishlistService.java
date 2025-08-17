@@ -12,4 +12,5 @@ public interface WishlistService {
     
     boolean isWishlisted(Long userId, String kakaoPlaceId);
     
+    long countByKakaoPlaceId(String kakaoPlaceId);    
 }

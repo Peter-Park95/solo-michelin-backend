@@ -1,88 +1,110 @@
 package com.michelin.service.place;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.michelin.dto.PlaceDto;
-import com.michelin.entity.wishlist.Wishlist;
 import com.michelin.repository.wishlist.WishlistRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.*;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
-
 
 @Service
+@RequiredArgsConstructor
 public class PlaceSearchService {
+
+    private static final Logger log = LoggerFactory.getLogger(PlaceSearchService.class);
+
+    private final WishlistRepository wishlistRepository;
 
     @Value("${kakao.rest.api.key}")
     private String kakaoApiKey;
-    private static final Logger log = LoggerFactory.getLogger(PlaceSearchService.class);
-    private final WishlistRepository wishlistRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    public PlaceSearchService(WishlistRepository wishlistRepository) {
-        this.wishlistRepository = wishlistRepository;
-    }
-
-    public List<PlaceDto> searchPlaces(String query, int page, double x, double y, Long userId) {
-        log.info("kakaoApiKey present? {}", kakaoApiKey != null);
-        log.info("kakaoApiKey head={}", kakaoApiKey != null ? kakaoApiKey.substring(0,6) : "null");
+    /**
+     * @param userId     로그인 사용자 ID (없으면 null)
+     * @param query      검색어
+     * @param page       페이지 (1~)
+     * @param x,y        근처 검색 시 좌표 (nationwide=false일 때만 사용)
+     * @param nationwide true면 전국 검색(좌표 미사용), false면 근처 검색(반경 20km, 정확도순)
+     */
+    public Map<String, Object> searchPlaces(Long userId,
+                                            String query,
+                                            int page,
+                                            Double x,
+                                            Double y,
+                                            boolean nationwide) {
         try {
             RestTemplate restTemplate = new RestTemplate();
-            String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
 
-            String url = "https://dapi.kakao.com/v2/local/search/keyword.json?query=" + encodedQuery
-                    + "&category_group_code=FD6"
-                    + "&page=" + page
-                    + "&x=" + x
-                    + "&y=" + y
-                    + "&sort=distance";
+            // 정확 매칭 강화: "아웃백" 식으로 쌍따옴표 감싸기
+            String encodedQuery = URLEncoder.encode("\"" + query.trim() + "\"", StandardCharsets.UTF_8);
 
-            URI uri = new URI(url);
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "KakaoAK " + kakaoApiKey);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
+            StringBuilder url = new StringBuilder("https://dapi.kakao.com/v2/local/search/keyword.json")
+                    .append("?query=").append(encodedQuery)
+                    .append("&category_group_code=FD6")
+                    .append("&page=").append(page);
 
-            ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
-
-            // JSON 파싱
-            JsonNode root = objectMapper.readTree(response.getBody());
-            JsonNode documents = root.get("documents");
-
-            // 사용자 위시리스트 조회
-            Set<String> wishlistedIds = wishlistRepository
-                    .findByUserId(userId)
-                    .stream()
-                    .map(Wishlist::getKakaoPlaceId)
-                    .collect(Collectors.toSet());
-
-            // 변환 및 위시 여부 표시
-            List<PlaceDto> places = new ArrayList<>();
-            for (JsonNode node : documents) {
-                PlaceDto dto = objectMapper.treeToValue(node, PlaceDto.class);
-                dto.setWishlisted(wishlistedIds.contains(dto.getId()));
-                places.add(dto);
+            if (!nationwide && x != null && y != null) {
+                // 근처 검색: 반경 20km + 정확도순
+                url.append("&x=").append(x)
+                        .append("&y=").append(y)
+                        .append("&radius=20000")
+                        .append("&sort=accuracy");
+            } else {
+                // 전국 검색: 좌표 미사용, 정확도순
+                url.append("&sort=accuracy");
             }
 
-            // 위시리스트 정렬
-            places.sort((a, b) -> Boolean.compare(b.isWishlisted(), a.isWishlisted())); // true가 먼저
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "KakaoAK " + kakaoApiKey);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            return places;
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    URI.create(url.toString()),
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
 
-        } catch (HttpClientErrorException | HttpServerErrorException ex) {
-            log.error("Kakao error: status={} body={}", ex.getStatusCode(), ex.getResponseBodyAsString());
-            throw ex;
+            Map<String, Object> body = response.getBody();
+            if (body == null) {
+                return Map.of(
+                        "documents", List.of(),
+                        "meta", Map.of("is_end", true)
+                );
+            }
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> docs =
+                    (List<Map<String, Object>>) body.getOrDefault("documents", List.of());
+
+            // Kakao place id 목록 추출
+            List<String> kakaoIds = new ArrayList<>();
+            for (Map<String, Object> d : docs) {
+                Object id = d.get("id");
+                if (id != null) kakaoIds.add(id.toString());
+            }
+
+            // 사용자 위시리스트에 있는 id 조회 (없으면 빈 Set)
+            Set<String> wished = (userId != null && !kakaoIds.isEmpty())
+                    ? new HashSet<>(wishlistRepository
+                    .findKakaoPlaceIdsByUserIdAndRestaurant_KakaoPlaceIdIn(userId, kakaoIds))
+                    : Collections.emptySet();
+
+            // documents에 isWishlisted 주입
+            for (Map<String, Object> d : docs) {
+                String id = String.valueOf(d.get("id"));
+                d.put("isWishlisted", wished.contains(id));
+            }
+
+            return body;
+
         } catch (Exception e) {
             log.error("Place search failed", e);
             throw new RuntimeException(e);

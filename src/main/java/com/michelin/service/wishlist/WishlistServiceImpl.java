@@ -75,4 +75,9 @@ public class WishlistServiceImpl implements WishlistService {
         return wishlistRepository.existsById(new WishlistId(userId, kakaoPlaceId));
     }
     
+    @Override
+    public long countByKakaoPlaceId(String kakaoPlaceId) {
+        return wishlistRepository.countByKakaoPlaceId(kakaoPlaceId);
+    }
+    
 }

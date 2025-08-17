@@ -120,5 +120,19 @@ public class ReviewController {
     ) {
         return ResponseEntity.ok(reviewService.getHighlightedReviews(limit));
     }
+    
+    //검색 시 마크 인포윈도우에 전체 리뷰 수 조회
+    @GetMapping("/{kakaoPlaceId}/stats")
+    public ResponseEntity<ReviewStatsDto> getReviewStats(@PathVariable String kakaoPlaceId) {
+        ReviewStatsDto stats = reviewService.getReviewStats(kakaoPlaceId);
+        return ResponseEntity.ok(stats);
+    }
+    
+	//전체 리뷰 조회
+    @GetMapping("/restaurant/{kakaoPlaceId}")
+    public ResponseEntity<List<ReviewDto>> getReviews(@PathVariable String kakaoPlaceId) {
+        List<ReviewDto> reviews = reviewService.getReviewsByPlace(kakaoPlaceId);
+        return ResponseEntity.ok(reviews);
+    }
 }
 
