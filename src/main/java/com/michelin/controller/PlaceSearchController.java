@@ -3,6 +3,8 @@ package com.michelin.controller;
 import com.michelin.dto.PlaceDto;
 import com.michelin.service.place.PlaceSearchService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/kakao-search")
 public class PlaceSearchController {
-
+    private static final Logger log = LoggerFactory.getLogger(PlaceSearchService.class);
     private final PlaceSearchService placeSearchService;
 
     @GetMapping
@@ -25,10 +27,12 @@ public class PlaceSearchController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(required = false) Double x,
             @RequestParam(required = false) Double y,
-            @RequestParam(defaultValue = "false") boolean nationwide
+            @RequestParam(defaultValue = "false") boolean nationwide,
+            @RequestParam(required = false) Long userId
     ) {
-        Long userId = currentUserIdOrNull();
-        Map<String, Object> result = placeSearchService.searchPlaces(userId, query, page, x, y, nationwide);
+        Long uid = (userId != null) ? userId : currentUserIdOrNull();
+        log.info("kakao-search uid={}", uid);
+        Map<String, Object> result = placeSearchService.searchPlaces(uid, query, page, x, y, nationwide);
         if (result == null) {
             return ResponseEntity.status(500).body(Map.of("error", "카카오 API 호출 실패"));
         }
