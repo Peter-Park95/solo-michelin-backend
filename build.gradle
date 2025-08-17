@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-	// Spring ê¸°ë³¸ ì˜ì¡´ì„±
+	// Spring ±âº» ÀÇÁ¸¼º
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -32,37 +32,37 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web-services'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-	// ê²€ì¦ ê´€ë ¨
+	// °ËÁõ °ü·Ã
 	implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
 	implementation 'org.hibernate.validator:hibernate-validator:8.0.0.Final'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-	// AWS SDK - ëª…í™•í•œ ë²„ì „ ì§€ì •
+	// AWS SDK - ¸íÈ®ÇÑ ¹öÀü ÁöÁ¤
 	implementation 'software.amazon.awssdk:s3:2.25.13'
 	implementation 'software.amazon.awssdk:auth:2.25.13'
 	implementation 'software.amazon.awssdk:regions:2.25.13'
 	
-	//ì´ë©”ì¼ ê´€ë ¨
+	//ÀÌ¸ŞÀÏ °ü·Ã
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
-	// ë¡¬ë³µ
+	// ·Òº¹
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	// ê°œë°œ í¸ì˜ì„±
+	// °³¹ß ÆíÀÇ¼º
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// ë°ì´í„°ë² ì´ìŠ¤
+	// µ¥ÀÌÅÍº£ÀÌ½º
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
-	// í…ŒìŠ¤íŠ¸ ê´€ë ¨
+	// Å×½ºÆ® °ü·Ã
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON ì²˜ë¦¬ìš©
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON Ã³¸®¿ë
 	implementation 'javax.servlet:javax.servlet-api:4.0.1'
 
 }
