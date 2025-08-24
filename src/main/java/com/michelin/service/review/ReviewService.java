@@ -31,4 +31,10 @@ public interface ReviewService {
     ReviewStatsDto getReviewStats(String kakaoPlaceId);
     
     List<ReviewDto> getReviewsByPlace(String kakaoPlaceId);
+
+    boolean toggleReviewLike(Long reviewId, Long userId);
+    
+    long getReviewLikeCount(Long reviewId);
+    
+    boolean hasUserLikedReview(Long reviewId, Long userId);
 }

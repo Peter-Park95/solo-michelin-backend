@@ -3,9 +3,12 @@ package com.michelin.service.review;
 import com.michelin.dto.review.*;
 import com.michelin.entity.restaurant.Restaurant;
 import com.michelin.entity.review.Review;
+import com.michelin.entity.reviewlike.ReviewLike;
+import com.michelin.entity.reviewlike.ReviewLikeId;
 import com.michelin.entity.user.User;
 import com.michelin.repository.restaurant.RestaurantRepository;
 import com.michelin.repository.review.ReviewRepository;
+import com.michelin.repository.reviewlike.ReviewLikeRepository;
 import com.michelin.repository.user.UserRepository;
 import com.michelin.repository.wishlist.WishlistRepository;
 import com.michelin.service.aws.S3Uploader;
@@ -23,6 +26,7 @@ import java.util.stream.Collectors;
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final S3Uploader s3Uploader;
@@ -31,11 +35,13 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewServiceImpl(ReviewRepository reviewRepository,
 				            UserRepository userRepository,
 				            RestaurantRepository restaurantRepository,
+                            ReviewLikeRepository reviewLikeRepository,
 				            S3Uploader s3Uploader,
 				            WishlistRepository wishlistRepository) {
 		this.reviewRepository = reviewRepository;
 		this.userRepository = userRepository;
 		this.restaurantRepository = restaurantRepository;
+        this.reviewLikeRepository = reviewLikeRepository;
 		this.s3Uploader = s3Uploader;
 		this.wishlistRepository = wishlistRepository;
 	}
@@ -71,22 +77,26 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
             }
         }
-        return ReviewResponse.from(reviewRepository.save(review));
+        return ReviewResponse.from(reviewRepository.save(review), false, 0);
     }
 
     @Override
     public List<ReviewResponse> getAllReviews() {
         return reviewRepository.findAll().stream()
-                .filter(r -> r.getDeleted() == 0)
-                .map(ReviewResponse::from)
+        		.filter(r -> r.getDeleted() == 0)
+                .map(r -> {
+                    long likeCount = reviewLikeRepository.countByReviewIdAndDeleted(r.getId(), 0);
+                    return ReviewResponse.from(r, false, likeCount); // 로그인 유저 없으니 liked=false
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
     public ReviewResponse getReviewById(Long id) {
-        Review review = reviewRepository.findById(id)
+    	Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
-        return ReviewResponse.from(review);
+        long likeCount = reviewLikeRepository.countByReviewIdAndDeleted(id, 0);
+        return ReviewResponse.from(review, false, likeCount);
     }
 
     @Override
@@ -112,8 +122,8 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new RuntimeException("이미지 업로드 중 오류 발생", e);
             }
         }
-
-        return ReviewResponse.from(reviewRepository.save(review));
+        long likeCount = reviewLikeRepository.countByReviewIdAndDeleted(review.getId(), 0);
+        return ReviewResponse.from(reviewRepository.save(review), false, likeCount);
     }
 
     @Override
@@ -143,7 +153,10 @@ public class ReviewServiceImpl implements ReviewService {
         } else {	// 기본
             reviewPage = reviewRepository.findByUserIdWithSort(userId, pageable);
         }
-        return reviewPage.map(ReviewResponse::from);
+        return reviewPage.map(r -> {
+            long likeCount = reviewLikeRepository.countByReviewIdAndDeleted(r.getId(), 0);
+            return ReviewResponse.from(r, false, likeCount);
+        });
     }
     
     @Override
@@ -151,7 +164,10 @@ public class ReviewServiceImpl implements ReviewService {
     	//이미지 포함 리뷰 조회
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created"));
         Page<Review> reviewPage = reviewRepository.findWithImageByUserId(userId, pageable);
-        return reviewPage.map(ReviewResponse::from);
+        return reviewPage.map(r -> {
+            long likeCount = reviewLikeRepository.countByReviewIdAndDeleted(r.getId(), 0);
+            return ReviewResponse.from(r, false, likeCount);
+        });
     }
     
     @Transactional
@@ -201,7 +217,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .deleted(0)
                 .build();
 
-        return ReviewResponse.from(reviewRepository.save(review));
+        return ReviewResponse.from(reviewRepository.save(review), false, 0);
     }
 
     @Override
@@ -236,13 +252,73 @@ public class ReviewServiceImpl implements ReviewService {
 	//전체 리뷰 조회
     public List<ReviewDto> getReviewsByPlace(String kakaoPlaceId) {
         List<Review> reviewEntities = reviewRepository.findAllByRestaurant_KakaoPlaceIdAndDeleted(kakaoPlaceId, 0);
+        reviewEntities.forEach(r -> System.out.println("Review ID: " + r.getId()));
         return reviewEntities.stream()
-                .map(r -> new ReviewDto(
-                        r.getUser().getUsername(), // <- User에서 이름 가져오기
-                        r.getComment(),
-                        (int) r.getRating() // rating 타입 맞춰서 int로 변환
-                ))
-                .collect(Collectors.toList());
+        		.map(r -> {
+        	        ReviewDto dto = new ReviewDto();
+        	        dto.setReviewId(r.getId());
+        	        dto.setUserName(r.getUser().getUsername());
+        	        dto.setComment(r.getComment());
+        	        dto.setRating(r.getRating());
+        	        dto.setImageUrl(r.getImageUrl());
+        	        dto.setFoodRating(r.getFoodRating());
+        	        dto.setMoodRating(r.getMoodRating());
+        	        dto.setServiceRating(r.getServiceRating());
+
+        	        // 좋아요 정보 세팅
+        	        dto.setLikeCount((long) r.getReviewLikes().size());
+        	        dto.setLiked(false); // 로그인 유저 체크 시 true/false로 업데이트 가능
+
+        	        return dto;
+        	    })
+        	    .collect(Collectors.toList());
+    }
+    
+    @Transactional
+    @Override
+    public boolean toggleReviewLike(Long reviewId, Long userId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        return reviewLikeRepository.findByUserIdAndReviewIdAndDeleted(userId, reviewId, 0)
+                .map(existing -> {
+                	if (existing.isActive()) {
+                        // 이미 좋아요 → 비활성화
+                        existing.deactivate();
+                        reviewLikeRepository.save(existing);
+                        return false; // 좋아요 취소됨
+                    } else {
+                        // row 는 있지만 deleted=1 → 다시 활성화
+                        existing.activate();
+                        reviewLikeRepository.save(existing);
+                        return true; // 좋아요 추가됨
+                    }
+                })
+                .orElseGet(() -> {
+                    // 없으면 → 추가
+                	ReviewLike newLike = ReviewLike.builder()
+                            .id(new ReviewLikeId(user.getId(), review.getId()))
+                            .user(user)
+                            .review(review)
+                            .created(LocalDateTime.now())
+                            .deleted(0)
+                            .build();
+
+                    reviewLikeRepository.save(newLike);
+                    return true;
+                });
+    }
+
+    @Override
+    public long getReviewLikeCount(Long reviewId) {
+        return reviewLikeRepository.countByReviewIdAndDeleted(reviewId, 0);
+    }
+
+    @Override
+    public boolean hasUserLikedReview(Long reviewId, Long userId) {
+        return reviewLikeRepository.findByUserIdAndReviewIdAndDeleted(userId, reviewId, 0).isPresent();
     }
 }
 
