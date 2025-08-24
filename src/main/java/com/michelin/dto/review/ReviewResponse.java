@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class ReviewResponse {
+	private Long reviewId;
     private Long id;
     private Long userId;
     private Long restaurantId;
@@ -24,8 +25,9 @@ public class ReviewResponse {
     private LocalDateTime created;
     private LocalDateTime modified;
 
-    public static ReviewResponse from(Review review){
+    public static ReviewResponse from(Review review, boolean liked, long likeCount){
         return ReviewResponse.builder()
+        		.reviewId(review.getId())
                 .id(review.getId())
                 .userId(review.getUser().getId())
                 .restaurantId(review.getRestaurant().getId())

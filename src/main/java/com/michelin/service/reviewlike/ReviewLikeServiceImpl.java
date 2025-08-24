@@ -39,11 +39,11 @@ public class ReviewLikeServiceImpl  implements  ReviewLikeService{
                     .orElseThrow(() -> new RuntimeException("해당 리뷰 없음"));
 
             ReviewLike reviewLike = ReviewLike.builder()
-                    .userId(userId)  // 필수 값
-                    .reviewId(reviewId)  // 필수 값
+            		.id(new ReviewLikeId(user.getId(), review.getId()))  // 필수 값
                     .user(user)  // 연관관계 설정
                     .review(review)
                     .created(LocalDateTime.now())
+                    .deleted(0)
                     .build();
 
             reviewLikeRepository.save(reviewLike);

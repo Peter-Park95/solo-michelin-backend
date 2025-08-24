@@ -9,7 +9,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@IdClass(ReviewLikeId.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,20 +16,17 @@ import java.time.LocalDateTime;
 @Builder
 public class ReviewLike {
 
-    @Id
-    @Column(name = "user_id")
-    private Long userId;
-
-    @Id
-    @Column(name = "review_id")
-    private Long reviewId;
+	@EmbeddedId
+    private ReviewLikeId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @MapsId("reviewId")
+    @JoinColumn(name = "review_id")
     private Review review;
 
     @Column(columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
@@ -38,5 +34,18 @@ public class ReviewLike {
 
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0")
     private int deleted;
+
+    // helper method
+    public boolean isActive() {
+        return this.deleted == 0;
+    }
+
+    public void activate() {
+        this.deleted = 0;
+    }
+
+    public void deactivate() {
+        this.deleted = 1;
+    }
 
 }
