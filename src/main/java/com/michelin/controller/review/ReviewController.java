@@ -68,9 +68,10 @@ public class ReviewController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "created") String orderBy,
             @RequestParam(required = false) Double minRating,
-            @RequestParam(required = false) Boolean withImage
+            @RequestParam(required = false) Boolean withImage,
+            @RequestParam(required = false) String search
     ) {
-        Page<ReviewResponse> reviewPage = reviewService.getReviewsByUserId(userId, page, size, orderBy, minRating, withImage);
+        Page<ReviewResponse> reviewPage = reviewService.getReviewsByUserId(userId, page, size, orderBy, minRating, withImage, search);
         Map<String, Object> response = new HashMap<>();
         response.put("reviews", reviewPage.getContent());
         response.put("hasMore", reviewPage.hasNext());
