@@ -136,7 +136,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating, Boolean withImage) {
+    public Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating, Boolean withImage, String search) {
     	String sortField = "created";
         if ("rating".equals(orderBy)) {        
         	sortField = "rating";
@@ -146,13 +146,16 @@ public class ReviewServiceImpl implements ReviewService {
 
         Page<Review> reviewPage;
 
-        if (Boolean.TRUE.equals(withImage)) {	// 이미지 필터 우선
+        if (search != null && !search.isEmpty()) {   // ✅ 검색 먼저 체크
+            reviewPage = reviewRepository.findByUserIdAndRestaurantNameContaining(userId, search, pageable);
+        } else if (Boolean.TRUE.equals(withImage)) {
             reviewPage = reviewRepository.findWithImageByUserId(userId, pageable);
-        } else if (minRating != null) {	// minRating 조건
+        } else if (minRating != null) {
             reviewPage = reviewRepository.findByUserIdWithMinRating(userId, minRating, pageable);
-        } else {	// 기본
+        } else {
             reviewPage = reviewRepository.findByUserIdWithSort(userId, pageable);
         }
+        
         return reviewPage.map(r -> {
             long likeCount = reviewLikeRepository.countByReviewIdAndDeleted(r.getId(), 0);
             return ReviewResponse.from(r, false, likeCount);
@@ -319,6 +322,16 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public boolean hasUserLikedReview(Long reviewId, Long userId) {
         return reviewLikeRepository.findByUserIdAndReviewIdAndDeleted(userId, reviewId, 0).isPresent();
+    }
+    
+    @Override
+    public Page<ReviewResponse> getReviewsByUserAndSearch(Long userId, String search, int page, int size, String orderBy, Double minRating, String category) {
+        String sortField = orderBy != null ? orderBy : "created";
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortField));
+
+        Page<Review> reviewPage = reviewRepository.findByUserIdAndRestaurantNameContaining(userId, search, pageable);
+
+        return reviewPage.map(ReviewResponse::from);
     }
 }
 

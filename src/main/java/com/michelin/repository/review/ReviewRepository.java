@@ -30,5 +30,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     long countByRestaurant_KakaoPlaceIdAndDeleted(String kakaoPlaceId, int deleted);
     
     List<Review> findAllByRestaurant_KakaoPlaceIdAndDeleted(String kakaoPlaceId, int deleted);
+
+    @Query("SELECT r FROM Review r " +
+    	       "WHERE r.user.id = :userId AND r.deleted = 0 " +
+    	       "AND (:search IS NULL OR LOWER(r.restaurant.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+	Page<Review> findByUserIdAndRestaurantNameContaining(@Param("userId") Long userId,
+	                                                     @Param("search") String search,
+	                                                     Pageable pageable);
+    
+//    @Query("SELECT r FROM Review r WHERE r.comment LIKE %:keyword% OR r.restaurant.name LIKE %:keyword%")
+//    Page<Review> findByUserIdAndRestaurantNameContaining(@Param("userId") Long userId,
+//            @Param("search") String search,
+//            Pageable pageable);
 }
 

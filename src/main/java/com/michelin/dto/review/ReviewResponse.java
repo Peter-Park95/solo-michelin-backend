@@ -44,4 +44,8 @@ public class ReviewResponse {
                 .modified(review.getModified())
                 .build();
     }
+    
+    public static ReviewResponse from(Review review) {
+        return from(review, false, 0); // 기본값
+    }
 }

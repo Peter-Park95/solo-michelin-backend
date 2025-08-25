@@ -17,7 +17,7 @@ public interface ReviewService {
 
     void deleteReview(Long id);
 
-    Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating, Boolean withImage);
+    Page<ReviewResponse> getReviewsByUserId(Long userId, int page, int size, String orderBy, Double minRating, Boolean withImage, String search);
 
     Page<ReviewResponse> getReviewsWithImageByUserId(Long userId, int page, int size);
 
@@ -37,4 +37,6 @@ public interface ReviewService {
     long getReviewLikeCount(Long reviewId);
     
     boolean hasUserLikedReview(Long reviewId, Long userId);
+    
+    Page<ReviewResponse> getReviewsByUserAndSearch(Long userId, String search, int page, int size, String orderBy, Double minRating, String category);
 }
