@@ -25,7 +25,7 @@ public interface ReviewService {
     
     void deleteReviewImage(Long reviewId);
 
-    public List<ReviewSummaryResponse> getHighlightedReviews(int limit);
+    public List<ReviewSummaryResponse> getHighlightedReviews(int limit, Long userId);
 
     //검색 시 마크 인포윈도우에 전체 리뷰 수 조회
     ReviewStatsDto getReviewStats(String kakaoPlaceId);

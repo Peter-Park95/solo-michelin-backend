@@ -114,12 +114,20 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("이미지 삭제 실패");
         }
     }
-    
+
     @GetMapping("/highlights")
     public ResponseEntity<List<ReviewSummaryResponse>> getHighlights(
-            @RequestParam(defaultValue = "9") int limit
+            @RequestParam(defaultValue = "9") int limit,
+            HttpServletRequest request
     ) {
-        return ResponseEntity.ok(reviewService.getHighlightedReviews(limit));
+        // JWT 추출
+        String token = extractJwtFromRequest(request);
+        Long userId = null;
+        if (token != null && jwtUtil.validateToken(token)) {
+            userId = jwtUtil.getUserIdFromToken(token);
+        }
+
+        return ResponseEntity.ok(reviewService.getHighlightedReviews(limit, userId));
     }
     
     //검색 시 마크 인포윈도우에 전체 리뷰 수 조회

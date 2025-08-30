@@ -18,8 +18,10 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, ReviewLi
     // 특정 유저가 특정 리뷰에 좋아요 눌렀는지 확인
     Optional<ReviewLike> findByUserIdAndReviewIdAndDeleted(Long userId, Long reviewId, int deleted);
 
-//    // 특정 리뷰의 좋아요 개수
-//    long countByReviewId(Long reviewId);
+    boolean existsByUserIdAndReviewId(Long userId, Long reviewId);
+
+    // 특정 리뷰의 좋아요 개수
+    long countByReviewId(Long reviewId);
 
 //    // 특정 리뷰의 모든 좋아요 가져오기 (필요 시)
 //    List<ReviewLike> findByReviewId(Long reviewId);

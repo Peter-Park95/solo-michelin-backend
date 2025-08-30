@@ -231,11 +231,21 @@ public class ReviewServiceImpl implements ReviewService {
         review.setModified(LocalDateTime.now());
         reviewRepository.save(review);
     }
-    
-    public List<ReviewSummaryResponse> getHighlightedReviews(int limit) {
-        List<Review> reviews = reviewRepository.findRandomHighlightedReviews(limit);
+
+    public List<ReviewSummaryResponse> getHighlightedReviews(int limit, Long userId) {
+        List<Review> reviews = reviewRepository.findRandomHighlightedReviews(limit)
+                .stream()
+                .filter(r -> r.getDeleted() == 0) // 삭제된 리뷰 제외
+                .toList();
+
         return reviews.stream()
-                .map(ReviewSummaryResponse::from)
+                .map(review -> {
+                    long likeCount = reviewLikeRepository.countByReviewId(review.getId());
+                    boolean likedByMe = (userId != null) &&
+                            reviewLikeRepository.existsByUserIdAndReviewId(userId, review.getId());
+
+                    return ReviewSummaryResponse.from(review, likeCount, likedByMe);
+                })
                 .collect(Collectors.toList());
     }
     
